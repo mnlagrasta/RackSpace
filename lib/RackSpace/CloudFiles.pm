@@ -32,8 +32,6 @@ sub get_container {
 		url => $name
 	});
 	
-	print Dumper($r);
-	
 	my $container_info = $r->{responseHeaders};
 
 	my $c = {

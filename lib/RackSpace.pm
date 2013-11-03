@@ -161,12 +161,6 @@ sub make_request() {
 	
 	$full_url .= 'format=json';
 	
-	if ($data->{params}) {
-		print "$full_url\n";
-	}
-	
-	print Dumper($full_url);
-	
 	if ($data->{type} eq 'GET') {
 		$client->GET($full_url);
 	} elsif ($data->{type} eq 'PUT') {

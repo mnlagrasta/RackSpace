@@ -1,6 +1,6 @@
 package RackSpace::CloudFiles;
 
-use Moose;
+use Moo;
 use RackSpace;
 use Data::Dumper;
 
@@ -62,7 +62,7 @@ sub create_container {
 
 package RackSpace::CloudFiles::Container;
 
-use Moose;
+use Moo;
 use Data::Dumper;
 use REST::Client;
 use File::Spec;
@@ -120,7 +120,7 @@ sub upload_file {
 
 package RackSpace::CloudFiles::File;
 
-use Moose;
+use Moo;
 use Data::Dumper;
 
 has 'name' => (is => 'rw');

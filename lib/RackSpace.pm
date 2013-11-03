@@ -1,6 +1,6 @@
 package RackSpace;
 
-use Moose;
+use Moo;
 use REST::Client;
 use JSON;
 use Date::Parse;

@@ -1,6 +1,6 @@
 package RackSpace::CloudFilesCDN;
 
-use Moose;
+use Moo;
 use RackSpace;
 use Data::Dumper;
 
@@ -55,7 +55,7 @@ sub get_container {
 
 package RackSpace::CloudFiles::CDNContainer;
 
-use Moose;
+use Moo;
 use Data::Dumper;
 use REST::Client;
 use File::Spec;

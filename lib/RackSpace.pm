@@ -128,31 +128,52 @@ sub parse_services() {
 
 sub make_request() {
 	my $self = shift;
-	my $type = shift || 'GET';
-	my $url = shift || '';
-	my $headers = shift;
-	my $body = shift;
+	
+	my $data = shift;
+	
+	$data->{type} ||= 'GET';
+	$data->{url} ||= '';
 	
 	$self->auth();
 	
 	my $client = REST::Client->new();
 	$client->addHeader('x-Auth-Token', $self->{token});
 	
-	if (defined $headers) {
-		foreach my $header (keys %$headers) {
-			$client->addHeader($header, $headers->{$header});
+	if (defined $data->{headers}) {
+		foreach my $header (keys %{$data->{headers}}) {
+			$client->addHeader($header, $data->{headers}{$header});
 		}
 	}
 	
-	my $full_url = $self->{active_endpoint}->{publicURL} . '/' . $url . '?format=json';
+	my $full_url = $self->{active_endpoint}->{publicURL};
 	
-	if ($type eq 'GET') {
+	if ($data->{url}) {
+		$full_url .= '/' . $data->{url};
+	}
+	
+	$full_url .= '?';
+	
+	if ($data->{params}) {
+		foreach my $param (keys %{$data->{params}}) {
+			$full_url .= $param . '=' . $data->{params}{$param} . '&';
+		}
+	}
+	
+	$full_url .= 'format=json';
+	
+	if ($data->{params}) {
+		print "$full_url\n";
+	}
+	
+	print Dumper($full_url);
+	
+	if ($data->{type} eq 'GET') {
 		$client->GET($full_url);
-	} elsif ($type eq 'PUT') {
-		$client->PUT($full_url, $body);
-	} elsif ($type eq 'DELETE') {
+	} elsif ($data->{type} eq 'PUT') {
+		$client->PUT($full_url, $data->{body});
+	} elsif ($data->{type} eq 'DELETE') {
 		$client->DELETE($full_url);
-	} elsif ($type eq 'HEAD') {
+	} elsif ($data->{type} eq 'HEAD') {
 		$client->HEAD($full_url);
 	}
 	

@@ -27,7 +27,13 @@ sub get_container {
 	my $self = shift;
 	my $name = shift;
 
-	my $r = $self->make_request('HEAD', $name);
+	my $r = $self->make_request({
+		type => 'HEAD',
+		url => $name
+	});
+	
+	print Dumper($r);
+	
 	my $container_info = $r->{responseHeaders};
 
 	my $c = {
@@ -46,80 +52,13 @@ sub create_container {
 	my $self = shift;
 	my $name = shift;
 	
-	my $r = $self->make_request('PUT', $name);
+	my $r = $self->make_request({
+		type => 'PUT',
+		url => $name
+	});
+	
 	return $self->get_container($name);
 }
-
-
-package RackSpace::CloudFilesCDN;
-
-use Moose;
-use RackSpace;
-use Data::Dumper;
-
-extends 'RackSpace';
-
-has 'name' => (is => 'rw', default => 'cloudFilesCDN');
-has 'type' => (is => 'rw', default => 'rax:object-cdn');
-has 'endpoints' => (is => 'rw');
-
-sub get_containers {
-	my $self = shift;
-
-	my $r = $self->make_request();
-	my $container_info = $r->{responseContent};
-
-	my %containers;
-	foreach my $c (@$container_info) {
-		$c->{parent} = $self;
-		$c->{url} = $self->{active_endpoint}->{publicURL} . '/' . $c->{name};
-		$containers{$c->{name}} = RackSpace::CloudFiles::CDNContainer->new($c);
-	}
-	return \%containers;
-}
-
-sub get_container {
-	my $self = shift;
-	my $name = shift;
-	
-	my $r = $self->make_request('HEAD', $name);
-	my $container_info = $r->{responseHeaders};
-
-	my $c = {
-		'parent' => $self,
-		'name' => $name,
-		'ttl' => $container_info->{'X-Ttl'},
-		'cdn_uri' => $container_info->{'X-Cdn-Uri'},
-		'cdn_ssl_uri' => $container_info->{'X-Cdn-Ssl-Uri'},
-		'log_retention' => $container_info->{'X-Log-Retention'},
-		'cdn_ios_uri' => $container_info->{'X-Cdn-Ios-Uri'},
-		'cdn_streaming_uri' => $container_info->{'X-Cdn-Streaming-Uri'},
-		'cdn_enabled' => $container_info->{'X-Cdn-Enabled'},
-	};
-	
-	$c->{parent} = $self;
-	return RackSpace::CloudFiles::CDNContainer->new($c);
-}
-
-
-package RackSpace::CloudFiles::CDNContainer;
-
-use Moose;
-use Data::Dumper;
-use REST::Client;
-use File::Spec;
-
-has 'parent' => (is => 'rw');
-has 'name' => (is => 'rw');
-has 'ttl' => (is => 'rw');
-has 'name' => (is => 'rw');
-has 'cdn_uri' => (is => 'rw');
-has 'cdn_ssl_uri' => (is => 'rw');
-has 'log_retention' => (is => 'rw');
-has 'cdn_ios_uri' => (is => 'rw');
-has 'cdn_streaming_uri' => (is => 'rw');
-has 'cdn_enabled' => (is => 'rw');
-
 
 package RackSpace::CloudFiles::Container;
 
@@ -137,8 +76,19 @@ has 'timestamp' => (is => 'rw');
 
 sub get_files() {
 	my $self = shift;
+	my $prefix = shift;
 
-	my $r = $self->{parent}->make_request('GET', $self->{name});
+	my $req_data = {
+		type => 'GET',
+		url => $self->{name},
+	};
+	
+	if ($prefix) {
+		$req_data->{params} = {prefix => $prefix};
+	}
+	
+	
+	my $r = $self->{parent}->make_request($req_data);
 	my $file_info = $r->{responseContent};
 	
 	my %result;
@@ -159,7 +109,11 @@ sub upload_file {
 	open( my $fh, "<", $file_name ) || die "Can't open $file_name: $!";
 	my $body = join('', <$fh>);	
 
-	$self->{parent}->make_request('PUT', $self->{name} . '/' . $file, undef, $body);
+	$self->{parent}->make_request({
+		type => 'PUT',
+		url => $self->{name} . '/' . $file,
+		body => $body
+	});
 
 	return 1;
 }
@@ -179,25 +133,33 @@ has 'url' => (is => 'rw');
 
 sub download {
 	my $self = shift;
-	my $r = $self->{parent}->{parent}->make_request('GET', $self->{parent}->{name} . '/' . $self->{name});
+	my $r = $self->{parent}->{parent}->make_request({
+		type => 'GET',
+		url => $self->{parent}->{name} . '/' . $self->{name}
+	});
 	return $r->{responseContent};
 }
 
 sub delete {
 	my $self = shift;
-	$self->{parent}->{parent}->make_request('DELETE', $self->{parent}->{name} . '/' . $self->{name});
+	$self->{parent}->{parent}->make_request({
+		type => 'DELETE',
+		url => $self->{parent}->{name} . '/' . $self->{name}
+	});
 }
 
 sub copy {
 	my $self = shift;
 	my $target = shift;
 	
-	my $headers = {
-		'x-Copy-From' => $self->{parent}->{name} . '/' . $self->{name},
-		'Content-Length' => 0
-	};
-	
-	$self->{parent}->{parent}->make_request('PUT', $target, $headers);
+	$self->{parent}->{parent}->make_request({
+		type => 'PUT',
+		url => $target,
+		headers => {
+			'x-Copy-From' => $self->{parent}->{name} . '/' . $self->{name},
+			'Content-Length' => 0
+		}
+	});
 }
 
 1;

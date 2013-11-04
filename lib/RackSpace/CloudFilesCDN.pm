@@ -63,7 +63,6 @@ use File::Spec;
 has 'parent' => (is => 'rw');
 has 'name' => (is => 'rw');
 has 'ttl' => (is => 'rw');
-has 'name' => (is => 'rw');
 has 'cdn_uri' => (is => 'rw');
 has 'cdn_ssl_uri' => (is => 'rw');
 has 'log_retention' => (is => 'rw');

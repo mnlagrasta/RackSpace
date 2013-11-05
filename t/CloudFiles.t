@@ -9,16 +9,8 @@ BEGIN { use_ok('RackSpace::CloudFiles'); }
 die ('rs_user and rs_key environment variables must be set to use this test') unless ($ENV{rs_user} && $ENV{rs_key});
 my $region = $ENV{'rs_region'} || 'DFW';
 
-my $cf_target = {
-                  'api_url' => 'https://identity.api.rackspacecloud.com/v2.0',
-                  'user' => 'drjays',
-                  'region' => 'DFW',
-                  'name' => 'cloudFiles',
-                  'type' => 'rax:object-cdn',
-                  'api_key' => 'ca59f184be49bd69af912efd7fe4af56'
-                };
 my $cf = RackSpace::CloudFiles->new({user => $ENV{rs_user}, api_key => $ENV{rs_key}, region => $region});
-ok( eq_hash($cf, $cf_target), 'Object Creation' );
+ok($cf, 'Object Creation' );
 
 ok($cf->auth(), 'Auth');
 
